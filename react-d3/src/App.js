@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import BarChart from "./visualizations/BarChart";
 import RadialChart from "./visualizations/RadialChart";
+import LineChart from "./visualizations/LineChart";
 import "./App.css";
 
 const App = () => {
@@ -59,6 +60,7 @@ const App = () => {
         updateDateRange={(range) => setDateRange(range)}
       />
       <RadialChart data={data} dateRange={dateRange} />
+      <LineChart data={data} dateRange={dateRange} />
       {/* End Charts */}
 
       <p>
