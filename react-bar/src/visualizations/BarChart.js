@@ -9,9 +9,10 @@ const BarChart = ({ data }) => {
   const [bars, setBars] = useState([]);
   const xAxisRef = useRef();
   const yAxisRef = useRef();
+  const barsGroupRef = useRef();
 
   useEffect(() => {
-    if (!data) return;
+    if (!(data && data.length)) return;
     // Think what do you need for the svg - x, y, height, fill, etc...
     // How to get there from raw data?
 
@@ -38,14 +39,15 @@ const BarChart = ({ data }) => {
     const colorExtent = d3.extent(data, (d) => d.avg).reverse(); // interpolateRdYlBu takes min for red, max for blue
     const colorScale = d3.scaleSequential().domain(colorExtent).interpolator(d3.interpolateRdYlBu);
 
-    setBars(
-      data.map((d) => ({
-        x: xScale(d.date),
-        y: yScale(d.high),
-        height: yScale(d.low) - yScale(d.high), // the lower, the larger the y is
-        fill: colorScale(d.avg),
-      }))
-    );
+    const newBars = data.map((d) => ({
+      x: xScale(d.date),
+      y: yScale(d.high),
+      height: yScale(d.low) - yScale(d.high), // the lower, the larger the y is
+      fill: colorScale(d.avg),
+    }));
+
+    // Update state
+    setBars(newBars);
 
     // Insert Axis to svg dom
     const xAxis = d3.axisBottom();
@@ -56,19 +58,36 @@ const BarChart = ({ data }) => {
     d3.select(yAxisRef.current).call(yAxis);
   }, [data]);
 
+  useEffect(() => {
+    if (!bars.length) return;
+
+    // use transition to managing certain attributes
+    // don't use react to manage the same attributes
+    d3.select(barsGroupRef.current)
+      .selectAll("rect")
+      .data(bars)
+      .transition()
+      .attr("y", (d) => d.y)
+      .attr("height", (d) => d.height)
+      .attr("fill", (d) => d.fill);
+  }, [bars]);
+
   return (
     <svg width={width} height={height}>
       {/* Bars */}
-      {bars.map((bar) => (
-        <rect
-          key={`${bar.x}-${bar.y}-${bar.height}-${bar.fill}`}
-          x={bar.x}
-          y={bar.y}
-          width="2"
-          height={bar.height}
-          fill={bar.fill}
-        />
-      ))}
+      <g ref={barsGroupRef}>
+        {bars.map((bar) => (
+          <rect
+            key={`${bar.x}-${bar.y}-${bar.height}-${bar.fill}`}
+            x={bar.x}
+            width="2"
+            // d3 transition is managing following attributes
+            // y={bar.y}
+            // height={bar.height}
+            // fill={bar.fill}
+          />
+        ))}
+      </g>
 
       {/* Axis */}
       <g ref={xAxisRef} transform={`translate(0,${height - margin.bottom})`} />
