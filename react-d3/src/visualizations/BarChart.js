@@ -69,11 +69,11 @@ const BarChart = ({ data, dateRange, updateDateRange }) => {
         [margin.left, margin.top], // top left cornor
         [width - margin.right, height - margin.bottom], // bottom right cornor
       ])
-      .on("end", () => {
+      .on("end", (evt) => {
         // Selection canceled
-        if (!d3.event.selection) return updateDateRange([]);
+        if (!evt.selection) return updateDateRange([]);
 
-        const [minX, maxX] = d3.event.selection;
+        const [minX, maxX] = evt.selection;
 
         // scale() goes from domain to range
         // scale.invert() goes from range to domain, it returns domain from scaled value

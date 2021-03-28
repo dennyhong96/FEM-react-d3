@@ -13,7 +13,7 @@ const LineChart = ({ data, dateRange }) => {
 
     // date scale on x axis
     const dateExtent = d3.extent(data, (d) => d.date);
-    const xScale = de
+    const xScale = d3
       .scaleTime()
       .domain(dateExtent)
       .range([margin.left, width - margin.right]);
