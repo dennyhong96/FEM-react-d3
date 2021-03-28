@@ -5,11 +5,12 @@ const width = 650;
 const height = 400;
 const margin = { top: 20, right: 5, bottom: 20, left: 35 };
 
-const BarChart = ({ data }) => {
+const BarChart = ({ data, dateRange, updateDateRange }) => {
   const [bars, setBars] = useState([]);
   const xAxisRef = useRef();
   const yAxisRef = useRef();
   const barsGroupRef = useRef();
+  const brushRef = useRef();
 
   useEffect(() => {
     if (!(data && data.length)) return;
@@ -39,12 +40,16 @@ const BarChart = ({ data }) => {
     const colorExtent = d3.extent(data, (d) => d.avg).reverse(); // interpolateRdYlBu takes min for red, max for blue
     const colorScale = d3.scaleSequential().domain(colorExtent).interpolator(d3.interpolateRdYlBu);
 
-    const newBars = data.map((d) => ({
-      x: xScale(d.date),
-      y: yScale(d.high),
-      height: yScale(d.low) - yScale(d.high), // the lower, the larger the y is
-      fill: colorScale(d.avg),
-    }));
+    const newBars = data.map((d) => {
+      const isSelected =
+        (dateRange.length && d.date < dateRange[1] && d.date > dateRange[0]) || !dateRange.length;
+      return {
+        x: xScale(d.date),
+        y: yScale(d.high),
+        height: yScale(d.low) - yScale(d.high), // the lower, the larger the y is
+        fill: isSelected ? colorScale(d.avg) : "#ddd",
+      };
+    });
 
     // Update state
     setBars(newBars);
@@ -56,7 +61,26 @@ const BarChart = ({ data }) => {
     yAxis.scale(yScale);
     d3.select(xAxisRef.current).call(xAxis);
     d3.select(yAxisRef.current).call(yAxis);
-  }, [data]);
+
+    // Insert a brush
+    const brush = d3
+      .brushX() // Horizontal brush
+      .extent([
+        [margin.left, margin.top], // top left cornor
+        [width - margin.right, height - margin.bottom], // bottom right cornor
+      ])
+      .on("end", () => {
+        if (!d3.event.selection) return updateDateRange([]);
+
+        const [minX, maxX] = d3.event.selection;
+
+        // scale.invert returns domain from scaled value
+        const dateRange = [xScale.invert(minX), xScale.invert(maxX)];
+        updateDateRange(dateRange);
+      });
+
+    d3.select(brushRef.current).call(brush);
+  }, [data, dateRange]);
 
   useEffect(() => {
     if (!bars.length) return;
@@ -76,22 +100,27 @@ const BarChart = ({ data }) => {
     <svg width={width} height={height}>
       {/* Bars */}
       <g ref={barsGroupRef}>
-        {bars.map((bar) => (
-          <rect
-            key={`${bar.x}-${bar.y}-${bar.height}-${bar.fill}`}
-            x={bar.x}
-            width="2"
-            // d3 transition is managing following attributes
-            // y={bar.y}
-            // height={bar.height}
-            // fill={bar.fill}
-          />
-        ))}
+        {bars.map((bar, idx) => {
+          return (
+            <rect
+              key={idx}
+              x={bar.x}
+              width="2"
+              // d3 transition is managing following attributes
+              // y={bar.y}
+              // height={bar.height}
+              // fill={bar.fill}
+            />
+          );
+        })}
       </g>
 
       {/* Axis */}
       <g ref={xAxisRef} transform={`translate(0,${height - margin.bottom})`} />
       <g ref={yAxisRef} transform={`translate(${margin.left},0)`} />
+
+      {/* Brush */}
+      <g ref={brushRef} />
     </svg>
   );
 };

@@ -5,7 +5,7 @@ const width = 650;
 const height = 650;
 const margin = { top: 20, right: 5, bottom: 20, left: 35 };
 
-const RadialChart = ({ data }) => {
+const RadialChart = ({ data, dateRange }) => {
   const [slices, setSlices] = useState([]);
 
   useEffect(() => {
@@ -26,17 +26,23 @@ const RadialChart = ({ data }) => {
     const genArc = d3.arc();
 
     setSlices(
-      data.map((dataPoint, idx) => ({
-        path: genArc({
-          innerRadius: radiusScale(dataPoint.low),
-          outerRadius: radiusScale(dataPoint.high),
-          startAngle: idx * perSliceAngle,
-          endAngle: (idx + 1) * perSliceAngle,
-        }),
-        fill: colorScale(dataPoint.avg),
-      }))
+      data.map((dataPoint, idx) => {
+        const isInRange =
+          (dateRange.length && dataPoint.date < dateRange[1] && dataPoint.date > dateRange[0]) ||
+          !dateRange.length;
+
+        return {
+          path: genArc({
+            innerRadius: radiusScale(dataPoint.low),
+            outerRadius: radiusScale(dataPoint.high),
+            startAngle: idx * perSliceAngle,
+            endAngle: (idx + 1) * perSliceAngle,
+          }),
+          fill: isInRange ? colorScale(dataPoint.avg) : "#ddd",
+        };
+      })
     );
-  }, [data]);
+  }, [data, dateRange]);
 
   return (
     <svg width={width} height={height}>
