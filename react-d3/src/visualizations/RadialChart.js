@@ -6,6 +6,7 @@ const height = 650;
 
 const RadialChart = ({ data, dateRange }) => {
   const [slices, setSlices] = useState([]);
+  const [tempAnnotations, setTempAnnotations] = useState([]);
 
   useEffect(() => {
     if (!data) return;
@@ -41,6 +42,14 @@ const RadialChart = ({ data, dateRange }) => {
         };
       })
     );
+
+    // Add annotations
+    setTempAnnotations(
+      [5, 20, 40, 60, 80].map((temp) => ({
+        r: radiusScale(temp),
+        temp,
+      }))
+    );
   }, [data, dateRange]);
 
   return (
@@ -51,6 +60,16 @@ const RadialChart = ({ data, dateRange }) => {
           <path key={idx} d={slice.path} fill={slice.fill} />
         ))}
       </g>
+
+      {/* Annotations */}
+      {tempAnnotations.map(({ r, temp }, idx) => (
+        <g transform={`translate(${width / 2},${height / 2})`} key={idx}>
+          <circle r={r} fill="none" stroke="#aaa" />
+          <text y={-r - 5} textAnchor="middle" fill="#333">
+            {temp}℉
+          </text>
+        </g>
+      ))}
     </svg>
   );
 };

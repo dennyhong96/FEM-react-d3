@@ -2,3 +2,6 @@
 
 [Slides](https://slides.com/shirleywu/deck-11)
 [Observable Notebook](https://observablehq.com/d/76434a391d1eaa80)
+
+[D3 Legends](https://d3-legend.susielu.com/)
+[React Annotation](https://react-annotation.susielu.com/)
