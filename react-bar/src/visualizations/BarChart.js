@@ -1,75 +1,80 @@
-import React, { Component } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+
 const width = 650;
 const height = 400;
 const margin = { top: 20, right: 5, bottom: 20, left: 35 };
 
-class BarChart extends Component {
-  state = {
-    bars: []
-  };
+const BarChart = ({ data }) => {
+  const [bars, setBars] = useState([]);
+  const xAxisRef = useRef();
+  const yAxisRef = useRef();
 
-  xAxis = d3.axisBottom().tickFormat(d3.timeFormat("%b"));
-  yAxis = d3.axisLeft().tickFormat(d => `${d}℉`);
+  useEffect(() => {
+    if (!data) return;
+    // Think what do you need for the svg - x, y, height, fill, etc...
+    // How to get there from raw data?
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const { data } = nextProps;
-    if (!data) return {};
-    // 1. map date to x-position
-    // get min and max of date
-    const extent = d3.extent(data, d => d.date);
+    // date scale on x axis
+    // 'extent' returns a tuple with min and max
+    const dateExtent = d3.extent(data, (d) => d.date);
+
+    // scaleTime takes in JavaScript date objects specifically (linear), outputs numbers
     const xScale = d3
       .scaleTime()
-      .domain(extent)
-      .range([margin.left, width - margin.right]);
+      .domain(dateExtent) // Tell the scale min and max
+      .range([margin.left, width - margin.right]); // Map min to 0 position, map max to full width
 
-    // 2. map high temp to y-position
-    // get min/max of high temp
-    const [min, max] = d3.extent(data, d => d.high);
+    // high temporature scale on y axis
+    const [tempMin, tempMax] = d3.extent(data, (d) => d.high);
+
+    // scaleLinear takes in numbers, outputs numbers
     const yScale = d3
       .scaleLinear()
-      .domain([Math.min(min, 0), max])
-      .range([height - margin.bottom, margin.top]);
+      .domain([Math.min(tempMin, 0), tempMax]) // to keep every bar inside svg viewport
+      .range([height - margin.bottom, margin.top]); // lowest temp 400px, highest temp 0px
 
-    // 3. map avg temp to color
-    // get min/max of avg
-    const colorExtent = d3.extent(data, d => d.avg).reverse();
-    const colorScale = d3
-      .scaleSequential()
-      .domain(colorExtent)
-      .interpolator(d3.interpolateRdYlBu);
+    // avg temporature scale as bar color
+    const colorExtent = d3.extent(data, (d) => d.avg).reverse(); // interpolateRdYlBu takes min for red, max for blue
+    const colorScale = d3.scaleSequential().domain(colorExtent).interpolator(d3.interpolateRdYlBu);
 
-    // array of objects: x, y, height
-    const bars = data.map(d => {
-      return {
+    setBars(
+      data.map((d) => ({
         x: xScale(d.date),
         y: yScale(d.high),
-        height: yScale(d.low) - yScale(d.high),
-        fill: colorScale(d.avg)
-      };
-    });
-
-    return { bars, xScale, yScale };
-  }
-
-  componentDidUpdate() {
-    this.xAxis.scale(this.state.xScale);
-    d3.select(this.refs.xAxis).call(this.xAxis);
-    this.yAxis.scale(this.state.yScale);
-    d3.select(this.refs.yAxis).call(this.yAxis);
-  }
-
-  render() {
-    return (
-      <svg width={width} height={height}>
-        {this.state.bars.map(d => (
-          <rect x={d.x} y={d.y} width={2} height={d.height} fill={d.fill} />
-        ))}
-        <g ref="xAxis" transform={`translate(0, ${height - margin.bottom})`} />
-        <g ref="yAxis" transform={`translate(${margin.left}, 0)`} />
-      </svg>
+        height: yScale(d.low) - yScale(d.high), // the lower, the larger the y is
+        fill: colorScale(d.avg),
+      }))
     );
-  }
-}
+
+    // Insert Axis to svg dom
+    const xAxis = d3.axisBottom();
+    const yAxis = d3.axisLeft();
+    xAxis.scale(xScale);
+    yAxis.scale(yScale);
+    d3.select(xAxisRef.current).call(xAxis);
+    d3.select(yAxisRef.current).call(yAxis);
+  }, [data]);
+
+  return (
+    <svg width={width} height={height}>
+      {/* Bars */}
+      {bars.map((bar) => (
+        <rect
+          key={`${bar.x}-${bar.y}-${bar.height}-${bar.fill}`}
+          x={bar.x}
+          y={bar.y}
+          width="2"
+          height={bar.height}
+          fill={bar.fill}
+        />
+      ))}
+
+      {/* Axis */}
+      <g ref={xAxisRef} transform={`translate(0,${height - margin.bottom})`} />
+      <g ref={yAxisRef} transform={`translate(${margin.left},0)`} />
+    </svg>
+  );
+};
 
 export default BarChart;

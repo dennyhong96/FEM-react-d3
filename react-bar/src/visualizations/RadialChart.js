@@ -1,11 +1,11 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as d3 from "d3";
 
 const width = 650;
 const height = 650;
 const margin = { top: 20, right: 5, bottom: 20, left: 35 };
 
-const Radial = ({ data }) => {
+const RadialChart = ({ data }) => {
   const [slices, setSlices] = useState([]);
 
   useEffect(() => {
@@ -50,4 +50,4 @@ const Radial = ({ data }) => {
   );
 };
 
-export default Radial;
+export default RadialChart;

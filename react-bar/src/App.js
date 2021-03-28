@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import "./App.css";
+
 import BarChart from "./visualizations/BarChart";
-import Chart from "./visualizations/Chart";
-import Radial from "./visualizations/Radial";
+import RadialChart from "./visualizations/RadialChart";
+import "./App.css";
 
 class App extends Component {
   state = {
@@ -55,8 +55,10 @@ class App extends Component {
           but just to show the possibility of using D3 and React*
         </p>
 
-        <Chart data={data} />
-        <Radial data={data} />
+        {/* Charts */}
+        <BarChart data={data} />
+        <RadialChart data={data} />
+        {/* End Charts */}
 
         <p>
           (Weather data from{" "}
